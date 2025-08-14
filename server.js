@@ -18,9 +18,9 @@ app.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      // Allow scripts from 'self' and the specific jQuery CDN domain used by FCC tests
-      scriptSrc: ["'self'", "https://code.jquery.com"],
-      styleSrc: ["'self'"],
+      // IMPORTANT: Allow scripts from 'self', jQuery CDN, AND FreeCodeCamp's test bundle CDN
+      scriptSrc: ["'self'", "https://code.jquery.com", "https://cdn.freecodecamp.org"],
+      styleSrc: ["'self'"], // Keep styles restricted to self for this test
       // Allow connections to 'self' and the FCC stock price proxy
       connectSrc: ["'self'", "https://stock-price-checker-proxy.freecodecamp.rocks"],
       imgSrc: ["'self'", "data:"], // Allow images from 'self' and data URIs (useful for some front-end assets)
@@ -42,7 +42,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // MongoDB Connection
-// The connection URI is fetched from your .env file
 const mongoURI = process.env.DB;
 
 if (!mongoURI) {
@@ -50,13 +49,8 @@ if (!mongoURI) {
   process.exit(1); // Exit if DB URI is missing
 }
 
-// Establish MongoDB connection
 mongoose.connect(mongoURI, {
-  // These options are deprecated for Mongoose 6+ and Node.js Driver 4.0.0+,
-  // so they are safely removed for cleaner code. Mongoose handles them by default now.
-  // useNewUrlParser: true,
-  // useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 15000, // Increase timeout slightly for network fluctuations (default is 10s)
+  serverSelectionTimeoutMS: 15000, // Increase timeout slightly for network fluctuations
   socketTimeoutMS: 45000,         // Keep alive for longer idle connections
 })
   .then(() => {
@@ -71,7 +65,7 @@ mongoose.connect(mongoURI, {
     // For FCC testing purposes
     fccTestingRoutes(app);
 
-    // Routing for API - also inside .then()
+    // Routing for API
     apiRoutes(app);
 
     // 404 Not Found Middleware
@@ -99,7 +93,6 @@ mongoose.connect(mongoURI, {
 
   })
   .catch(err => {
-    // If MongoDB connection fails, log the error and exit the process
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
